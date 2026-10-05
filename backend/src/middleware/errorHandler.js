@@ -3,6 +3,10 @@ export function errorHandler(err, req, res, next) {
     return res.status(400).json({ error: 'Ungültiges JSON' });
   }
 
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'Anfrage zu groß' });
+  }
+
   if (err.status) {
     return res.status(err.status).json({ error: err.message });
   }
