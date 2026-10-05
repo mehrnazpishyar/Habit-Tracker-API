@@ -3,10 +3,12 @@ import { list, getOne, create, update, remove } from '../controllers/habit.contr
 import { authenticate } from '../middleware/authenticate.js';
 import { validate } from '../middleware/validate.js';
 import { createHabitSchema, updateHabitSchema } from '../schemas/habit.schema.js';
+import checkInRoutes from './checkin.routes.js';
 
 const router = Router();
 
 router.use(authenticate);
+router.use('/:habitId/checkins', checkInRoutes);
 
 router.get('/', list);
 router.post('/', validate(createHabitSchema), create);
