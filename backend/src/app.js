@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import authRoutes from './routes/auth.routes.js';
 import habitRoutes from './routes/habit.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import statsRoutes from './routes/stats.routes.js';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/habits', habitRoutes);
+app.use('/api/stats', statsRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Route nicht gefunden' });

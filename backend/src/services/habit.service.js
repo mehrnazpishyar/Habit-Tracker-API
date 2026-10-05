@@ -1,5 +1,7 @@
 import prisma from '../lib/prisma.js';
 import { HttpError } from '../utils/HttpError.js';
+import { getDatesByHabit } from './streak.service.js';
+import { calculateStreak } from '../utils/streak.js';
 
 const habitSelect = {
   id: true,
@@ -8,6 +10,14 @@ const habitSelect = {
   color: true,
   createdAt: true,
 };
+
+function withStreak(habit, dates = []) {
+  return {
+    ...habit,
+    streak: calculateStreak(dates),
+    lastCheckIn: dates.length ? [...dates].sort().at(-1) : null,
+  };
+}
 
 export async function listHabits(userId, { search, page, limit }) {
   const where = {
@@ -26,6 +36,9 @@ export async function listHabits(userId, { search, page, limit }) {
     prisma.habit.count({ where }),
   ]);
 
+    const datesByHabit = await getDatesByHabit(items.map((habit) => habit.id));
+
+
   return { items, page, limit, total, totalPages: Math.ceil(total / limit) };
 }
 
@@ -39,14 +52,17 @@ export async function getHabit(userId, habitId) {
     throw new HttpError(404, 'Habit nicht gefunden');
   }
 
-  return habit;
+   const datesByHabit = await getDatesByHabit([habit.id]);
+  return withStreak(habit, datesByHabit.get(habit.id));
 }
 
-export function createHabit(userId, data) {
-  return prisma.habit.create({
+export async function createHabit(userId, data) {
+  const habit = await prisma.habit.create({
     data: { ...data, userId },
     select: habitSelect,
   });
+
+  return withStreak(habit);
 }
 
 export async function updateHabit(userId, habitId, data) {
@@ -71,3 +87,4 @@ export async function deleteHabit(userId, habitId) {
     throw new HttpError(404, 'Habit nicht gefunden');
   }
 }
+
