@@ -10,14 +10,15 @@ import { useHabits } from '../context/habitContext';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { habits, loading, error, fetchHabits, clearHabits } = useHabits();
+  const { habits, loading, error, fetchHabits,fetchStats, clearHabits } = useHabits();
   const [showModal, setShowModal] = useState(false);
   const [editHabit, setEditHabit] = useState(null);
   const username = localStorage.getItem(USERNAME_KEY) || 'Unbekannt';
 
   useEffect(() => {
     fetchHabits();
-  }, [fetchHabits]);
+    fetchStats();
+  }, [fetchHabits, fetchStats]);
 
   function openCreate() {
     setEditHabit(null);

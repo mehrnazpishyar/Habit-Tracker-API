@@ -5,6 +5,11 @@ export async function fetchHabits() {
   return data.items;
 }
 
+export async function fetchHabit(id) {
+  const { data } = await axiosInstance.get(`/habits/${id}`);
+  return data;
+}
+
 export async function createHabit(habit) {
   const { data } = await axiosInstance.post('/habits', habit);
   return data;

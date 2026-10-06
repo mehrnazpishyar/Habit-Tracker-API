@@ -1,11 +1,34 @@
-import { Flame, Pen, X } from 'lucide-react';
+import { useState } from 'react';
+import { Check, Flame, Pen, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useHabits } from '../context/habitContext';
 import { getErrorMessage } from '../utils/errors';
 import { getTextColor } from '../utils/colors';
+import { getLocalDateString } from '../utils/dates';
 
 export default function Habit({ habit, onEdit }) {
-  const { removeHabit } = useHabits();
+  const { removeHabit, toggleToday, stats } = useHabits();
+  const [busy, setBusy] = useState(false);
+
+   const total = stats[habit.id]?.totalCheckIns;
+   const doneToday = habit.lastCheckIn === getLocalDateString();
+
+  async function handleToggle() {
+    if (busy) {
+      return;
+    }
+
+    setBusy(true);
+
+    try {
+      const nowDone = await toggleToday(habit);
+      toast.success(nowDone ? 'Für heute abgehakt' : 'Check-in zurückgenommen');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function handleDelete() {
     const confirmed = window.confirm(
@@ -23,10 +46,35 @@ export default function Habit({ habit, onEdit }) {
       toast.error(getErrorMessage(error));
     }
   }
+  
+   function handleKeyDown(event) {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleToggle();
+    }
+  }
+
+  function stop(action) {
+    return (event) => {
+      event.stopPropagation();
+      action();
+    };
+  }
+
 
   return (
     <div
-      className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:w-52 xl:w-56 rounded-lg border border-slate-200 p-3 sm:p-4 flex flex-col gap-2 relative"
+      tabIndex={0}
+      title={doneToday ? 'Antippen, um den Check-in zurückzunehmen' : 'Antippen zum Abhaken'}
+      onClick={handleToggle}
+      onKeyDown={handleKeyDown}
+      className={`w-full max-w-xs sm:max-w-sm md:max-w-md lg:w-52 xl:w-56 rounded-lg border border-slate-200 p-3 sm:p-4 flex flex-col gap-2 relative cursor-pointer select-none ${
+        doneToday ? 'border-black/40 ring-2 ring-black/30' : 'border-slate-200'
+      } ${busy ? 'opacity-70' : ''}`}
       style={{ backgroundColor: habit.color, color: getTextColor(habit.color) }}
     >
       <div className="absolute top-2 right-2 flex gap-1">
@@ -34,7 +82,7 @@ export default function Habit({ habit, onEdit }) {
           type="button"
           aria-label="Habit bearbeiten"
           className="w-6 h-6 flex items-center justify-center"
-          onClick={() => onEdit(habit)}
+          onClick={stop(() => onEdit(habit))}
         >
           <Pen size={15} />
         </button>
@@ -42,7 +90,7 @@ export default function Habit({ habit, onEdit }) {
           type="button"
           aria-label="Habit löschen"
           className="w-6 h-6 flex items-center justify-center"
-          onClick={handleDelete}
+          onClick={stop(handleDelete)}
         >
           <X size={15} />
         </button>
@@ -51,6 +99,17 @@ export default function Habit({ habit, onEdit }) {
       <h2 className="text-xl font-semibold pt-2 pr-12 break-words">{habit.name}</h2>
 
       {habit.description ? <p className="text-sm break-words">{habit.description}</p> : null}
+
+       <p className="text-sm flex items-center gap-1">
+        {doneToday ? (
+          <>
+            <Check size={16} /> Heute erledigt
+          </>
+        ) : (
+          'Heute noch offen'
+        )}
+      </p>
+
 
       <div className="mt-auto pt-2 border-t border-black/10">
         <div className="flex items-center gap-1 text-lg font-bold">

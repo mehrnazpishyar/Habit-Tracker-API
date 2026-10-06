@@ -1,10 +1,14 @@
 import { useCallback, useState } from 'react';
 import { HabitContext } from './habitContext';
 import * as habitsApi from '../api/habits';
+import * as checkInsApi from '../api/checkins';
+import * as statsApi from '../api/stats';
 import { getErrorMessage } from '../utils/errors';
+import { getLocalDateString } from '../utils/dates';
 
 export default function HabitProvider({ children }) {
   const [habits, setHabits] = useState([]);
+    const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -18,6 +22,15 @@ export default function HabitProvider({ children }) {
       setError(getErrorMessage(err));
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+    const fetchStats = useCallback(async () => {
+    try {
+      const data = await statsApi.fetchStats();
+      setStats(Object.fromEntries(data.habits.map((item) => [item.id, item])));
+    } catch {
+      setStats({});
     }
   }, []);
 
@@ -38,18 +51,42 @@ export default function HabitProvider({ children }) {
     setHabits((prev) => prev.filter((habit) => habit.id !== id));
   }
 
+   async function toggleToday(habit) {
+    const today = getLocalDateString();
+    const doneToday = habit.lastCheckIn === today;
+
+    if (doneToday) {
+      const [entry] = await checkInsApi.fetchCheckIns(habit.id, { from: today, to: today });
+      if (entry) {
+        await checkInsApi.deleteCheckIn(habit.id, entry.id);
+      }
+    } else {
+      await checkInsApi.createCheckIn(habit.id, today);
+    }
+
+    const [updated] = await Promise.all([habitsApi.fetchHabit(habit.id), fetchStats()]);
+    setHabits((prev) => prev.map((item) => (item.id === habit.id ? updated : item)));
+
+    return !doneToday;
+  }
+
+
   function clearHabits() {
     setHabits([]);
+    setStats({});
   }
 
   const value = {
     habits,
     loading,
+    stats,
     error,
     fetchHabits,
+    fetchStats,
     createHabit,
     updateHabit,
     removeHabit,
+    toggleToday,
     clearHabits,
   };
 
