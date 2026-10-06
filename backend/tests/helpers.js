@@ -19,3 +19,9 @@ export async function createUserAndLogin(
 }
 
 export const authHeader = (token) => ({ Authorization: `Bearer ${token}` });
+
+export const daysAgo = (n) => {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - n);
+  return d.toISOString().slice(0, 10);
+};
