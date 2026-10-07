@@ -7,12 +7,14 @@ import ModalForm from '../components/ModalForm';
 import { logoutUser } from '../api/auth';
 import { USERNAME_KEY } from '../api/axiosInstance';
 import { useHabits } from '../context/habitContext';
+import StatsModal from '../components/StatsModal';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { habits, loading, error, fetchHabits,fetchStats, clearHabits } = useHabits();
+  const { habits, loading, error, fetchHabits, fetchStats, clearHabits } = useHabits();
   const [showModal, setShowModal] = useState(false);
   const [editHabit, setEditHabit] = useState(null);
+  const [statsHabitId, setStatsHabitId] = useState(null);
   const username = localStorage.getItem(USERNAME_KEY) || 'Unbekannt';
 
   useEffect(() => {
@@ -35,6 +37,14 @@ export default function Dashboard() {
     setEditHabit(null);
   }
 
+  function openStats(id) {
+    setStatsHabitId(id);
+  }
+
+  function closeStats() {
+    setStatsHabitId(null);
+  }
+
   function signOut() {
     clearHabits();
     logoutUser();
@@ -46,6 +56,12 @@ export default function Dashboard() {
       {showModal &&
         createPortal(
           <ModalForm onClose={closeModal} editHabit={editHabit} />,
+          document.getElementById('modal'),
+        )}
+
+      {statsHabitId !== null &&
+        createPortal(
+          <StatsModal habitId={statsHabitId} onClose={closeStats} />,
           document.getElementById('modal'),
         )}
 
@@ -73,7 +89,7 @@ export default function Dashboard() {
       ) : habits.length > 0 ? (
         <div className="flex flex-col justify-center items-center mt-10">
           <HabitButton onClick={openCreate} />
-          <HabitGrid onEdit={openEdit} />
+          <HabitGrid onEdit={openEdit} onShowStats={openStats} />
         </div>
       ) : (
         <div className="flex flex-col justify-center items-center mt-20">

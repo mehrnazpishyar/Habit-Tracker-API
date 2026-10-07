@@ -6,7 +6,7 @@ import { getErrorMessage } from '../utils/errors';
 import { getTextColor } from '../utils/colors';
 import { getLocalDateString } from '../utils/dates';
 
-export default function Habit({ habit, onEdit }) {
+export default function Habit({ habit, onEdit , onShowStats}) {
   const { removeHabit, toggleToday, stats } = useHabits();
   const [busy, setBusy] = useState(false);
 
@@ -112,11 +112,24 @@ export default function Habit({ habit, onEdit }) {
 
 
       <div className="mt-auto pt-2 border-t border-black/10">
-        <div className="flex items-center gap-1 text-lg font-bold">
-          <Flame size={18} />
-          {habit.streak}
-          <span className="text-sm font-normal">{habit.streak === 1 ? 'Tag' : 'Tage'}</span>
-        </div>
+        <div className="flex justify-between items-center">
+            <div>
+            <span className="text-lg font-bold">{total ?? '–'}</span>
+            <span className="text-xs"> Check-ins</span>
+            </div>
+            <div className="flex items-center gap-1 font-bold">
+                 <Flame size={18} />
+                 {habit.streak}
+            </div>
+            </div>
+
+            <button
+          type="button"
+          onClick={stop(() => onShowStats(habit.id))}
+          className="mt-2 w-full p-1 border border-current rounded-md text-sm"
+        >
+          Statistik
+        </button>
       </div>
     </div>
   );
