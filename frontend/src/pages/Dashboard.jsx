@@ -8,10 +8,11 @@ import { logoutUser } from '../api/auth';
 import { USERNAME_KEY } from '../api/axiosInstance';
 import { useHabits } from '../context/habitContext';
 import StatsModal from '../components/StatsModal';
+import ProgressPanel from '../components/ProgressPanel';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { habits, loading, error, fetchHabits, fetchStats, clearHabits } = useHabits();
+  const { habits, loading, error, fetchHabits, fetchStats, fetchProgress, clearHabits } = useHabits();
   const [showModal, setShowModal] = useState(false);
   const [editHabit, setEditHabit] = useState(null);
   const [statsHabitId, setStatsHabitId] = useState(null);
@@ -20,7 +21,8 @@ export default function Dashboard() {
   useEffect(() => {
     fetchHabits();
     fetchStats();
-  }, [fetchHabits, fetchStats]);
+    fetchProgress();
+  }, [fetchHabits, fetchStats, fetchProgress]);
 
   function openCreate() {
     setEditHabit(null);
@@ -88,6 +90,7 @@ export default function Dashboard() {
         </div>
       ) : habits.length > 0 ? (
         <div className="flex flex-col justify-center items-center mt-10">
+          <ProgressPanel />
           <HabitButton onClick={openCreate} />
           <HabitGrid onEdit={openEdit} onShowStats={openStats} />
         </div>

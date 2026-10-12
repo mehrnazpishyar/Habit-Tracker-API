@@ -8,7 +8,8 @@ import { getLocalDateString } from '../utils/dates';
 
 export default function HabitProvider({ children }) {
   const [habits, setHabits] = useState([]);
-    const [stats, setStats] = useState({});
+  const [stats, setStats] = useState({});
+  const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -25,7 +26,7 @@ export default function HabitProvider({ children }) {
     }
   }, []);
 
-    const fetchStats = useCallback(async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const data = await statsApi.fetchStats();
       setStats(Object.fromEntries(data.habits.map((item) => [item.id, item])));
@@ -34,9 +35,19 @@ export default function HabitProvider({ children }) {
     }
   }, []);
 
+  const fetchProgress = useCallback(async () => {
+    try {
+      setProgress(await statsApi.fetchDailyProgress());
+    } catch {
+      setProgress(null);
+    }
+  }, []);
+
   async function createHabit(data) {
     const habit = await habitsApi.createHabit(data);
     setHabits((prev) => [habit, ...prev]);
+    fetchStats();
+    fetchProgress();
     return habit;
   }
 
@@ -49,9 +60,11 @@ export default function HabitProvider({ children }) {
   async function removeHabit(id) {
     await habitsApi.deleteHabit(id);
     setHabits((prev) => prev.filter((habit) => habit.id !== id));
+    fetchStats();
+    fetchProgress();
   }
 
-   async function toggleToday(habit) {
+  async function toggleToday(habit) {
     const today = getLocalDateString();
     const doneToday = habit.lastCheckIn === today;
 
@@ -64,7 +77,11 @@ export default function HabitProvider({ children }) {
       await checkInsApi.createCheckIn(habit.id, today);
     }
 
-    const [updated] = await Promise.all([habitsApi.fetchHabit(habit.id), fetchStats()]);
+    const [updated] = await Promise.all([
+      habitsApi.fetchHabit(habit.id),
+      fetchStats(),
+      fetchProgress(),
+    ]);
     setHabits((prev) => prev.map((item) => (item.id === habit.id ? updated : item)));
 
     return !doneToday;
@@ -74,15 +91,18 @@ export default function HabitProvider({ children }) {
   function clearHabits() {
     setHabits([]);
     setStats({});
+    setProgress(null);
   }
 
   const value = {
     habits,
     loading,
     stats,
+    progress,
     error,
     fetchHabits,
     fetchStats,
+    fetchProgress,
     createHabit,
     updateHabit,
     removeHabit,
