@@ -7,7 +7,7 @@ Zielgruppe sind Einzelpersonen, die ihre Gewohnheiten digital verfolgen wollen. 
 
 ## Live-URL
 
-Wird nach dem Deployment ergänzt.
+https://habit-tracker-api-main.onrender.com
 
 
 ## Datenmodell (ERD)
